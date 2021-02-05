@@ -1,1 +1,1 @@
-web: bash ./build/index.js
+web: yarn build/index.js
