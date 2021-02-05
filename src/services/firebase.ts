@@ -38,7 +38,6 @@ export const getDailyShitters: () => Promise<Entry[]> = async () => {
     const dateNow: Date = new Date();
     dateNow.setHours(0);
 
-    console.log(firestore.Timestamp.fromDate(dateNow).toDate());
     const db = firestore();
     const entriesRef = db
       .collection("entries")
