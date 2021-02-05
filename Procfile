@@ -1,1 +1,1 @@
-web: build/index.js
+web: bash ./build/index.js
