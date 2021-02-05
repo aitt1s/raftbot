@@ -23,7 +23,12 @@ interface Entry {
 
 // Initialize Firebase
 firebase.initializeApp({
-  credential: firebase.credential.applicationDefault(),
+  credential: firebase.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+  }),
+  databaseURL: "https://raftbot-ef942.firebaseio.com",
 });
 
 const db = firebase.firestore();
