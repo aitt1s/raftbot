@@ -4,7 +4,7 @@
   "description": "Discord bot for counting given words with leaderboards",
   "main": "src/index.ts",
   "author": "aittis",
-  "license": "NO LICENSE",
+  "license": "UNLICENSED",
   "scripts": {
     "test": "jest --watch",
     "dev": "nodemon --config nodemon.json",
