@@ -28,7 +28,7 @@ export const getWeekShitters: (guildId: string) => Promise<Entry[]> = async (
     const entriesRef = db
       .collection(guildId)
       .where("type", "==", "create")
-      .where("created", ">", dateNow);
+      .where("created", ">", firestore.Timestamp.fromDate(dateNow));
     const snapshot = await entriesRef.get();
 
     return iterateAndSortSnapshot(snapshot);
