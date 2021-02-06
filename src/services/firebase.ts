@@ -1,10 +1,12 @@
 import { firestore } from "firebase-admin";
 import { Entry } from "../types/Raftbot";
 
-export const getAllShitters: () => Promise<Entry[]> = async () => {
+export const getAllShitters: (guildId: string) => Promise<Entry[]> = async (
+  guildId
+) => {
   try {
     const db = firestore();
-    const entriesRef = db.collection("entries").where("type", "==", "create");
+    const entriesRef = db.collection(guildId).where("type", "==", "create");
     const snapshot = await entriesRef.get();
 
     return iterateAndSortSnapshot(snapshot);
@@ -13,7 +15,9 @@ export const getAllShitters: () => Promise<Entry[]> = async () => {
   }
 };
 
-export const getWeekShitters: () => Promise<Entry[]> = async () => {
+export const getWeekShitters: (guildId: string) => Promise<Entry[]> = async (
+  guildId
+) => {
   try {
     const dateNow: Date = new Date();
 
@@ -22,7 +26,7 @@ export const getWeekShitters: () => Promise<Entry[]> = async () => {
 
     const db = firestore();
     const entriesRef = db
-      .collection("entries")
+      .collection(guildId)
       .where("type", "==", "create")
       .where("created", ">", dateNow);
     const snapshot = await entriesRef.get();
@@ -33,14 +37,16 @@ export const getWeekShitters: () => Promise<Entry[]> = async () => {
   }
 };
 
-export const getDailyShitters: () => Promise<Entry[]> = async () => {
+export const getDailyShitters: (guildId: string) => Promise<Entry[]> = async (
+  guildId
+) => {
   try {
     const dateNow: Date = new Date();
     dateNow.setHours(0);
 
     const db = firestore();
     const entriesRef = db
-      .collection("entries")
+      .collection(guildId)
       .where("type", "==", "create")
       .where("created", ">", firestore.Timestamp.fromDate(dateNow));
     const snapshot = await entriesRef.get();
@@ -51,11 +57,14 @@ export const getDailyShitters: () => Promise<Entry[]> = async () => {
   }
 };
 
-export const addEntry: (entry: Entry) => Promise<void> = async (entry) => {
+export const addEntry: (
+  guildId: string,
+  entry: Entry
+) => Promise<void> = async (guildId, entry) => {
   const db = firestore();
 
   try {
-    await db.collection("entries").add({
+    await db.collection(guildId).add({
       ...entry,
       created: firestore.FieldValue.serverTimestamp(),
     });

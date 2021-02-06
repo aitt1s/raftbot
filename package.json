@@ -10,7 +10,8 @@
     "dev": "nodemon --config nodemon.json",
     "build": "tsc --build build.json",
     "start": "node ./build/index.js",
-    "postinstall": "tsc --build build.json"
+    "postinstall": "tsc --build build.json",
+    "run-migrate-script": "tsc ./scripts/migrateCollection.ts && node ./scripts/migrateCollection.js"
   },
   "devDependencies": {
     "@types/node": "^14.14.25",
@@ -23,7 +24,6 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "discord.js": "^12.5.1",
-    "firebase": "^8.2.6",
     "firebase-admin": "^9.4.2"
   },
   "engines": {

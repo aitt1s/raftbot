@@ -1,8 +1,7 @@
 import { Message, MessageReaction } from "discord.js";
 import { EntryType } from "../types/Raftbot";
 import { addEntry } from "../services/firebase";
-import { isBotCommand } from "../helpers/handlerHelpers";
-import { isPoopEntry } from "../helpers/handlerHelpers";
+import { isBotCommand, isPoopEntry } from "../helpers/handlerHelpers";
 import { handleBotCommand } from "../handlers/botHandler";
 import { reactMessage } from "../services/bot";
 
@@ -17,7 +16,7 @@ export const handleMessage: (message: Message) => Promise<void> = async (
   }
 
   if (isPoopEntry(message)) {
-    await addEntry({
+    await addEntry(message.guild.id, {
       type: EntryType.CREATE,
       messageId: message.id,
       author: {
@@ -38,7 +37,7 @@ export const handleReaction: (
   const { message } = reaction;
 
   if (isPoopEntry(message)) {
-    addEntry({
+    addEntry(message.guild.id, {
       type: EntryType.LIKE,
       messageId: message.id,
       author: {

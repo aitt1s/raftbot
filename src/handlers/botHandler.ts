@@ -21,23 +21,27 @@ const mapCommand = {
 export const handleBotCommand: (message: Message) => Promise<void> = async (
   message
 ) => {
-  const { content, channel } = message;
+  const {
+    content,
+    channel,
+    guild: { id: guildId },
+  } = message;
   if (tryCommand(content, mapCommand[Command.ATH])) {
-    const shitters = await getAllShitters();
+    const shitters = await getAllShitters(guildId);
 
     await sendTopShitters(channel, shitters);
     return;
   }
 
   if (tryCommand(content, mapCommand[Command.WEEKLY])) {
-    const shitters = await getWeekShitters();
+    const shitters = await getWeekShitters(guildId);
 
     await sendWeekShitters(channel, shitters);
     return;
   }
 
   if (tryCommand(content, mapCommand[Command.DAILY])) {
-    const shitters = await getDailyShitters();
+    const shitters = await getDailyShitters(guildId);
 
     await sendDailyShitters(channel, shitters);
     return;
