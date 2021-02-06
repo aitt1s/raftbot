@@ -1,7 +1,11 @@
 import { Message } from "discord.js";
 
-export const doesMatch: (message: Message) => boolean = (message) =>
-  !!message?.content?.toLowerCase()?.match(/\bhep\b|\uD83D\uDCA9/);
+export const isPoopEntry = (message: Message): boolean => {
+  const poopTriggers = ['hep', '💩'];
+  const words = message.content.toLowerCase().split(' ');
+
+  return poopTriggers.some(trigger => words.includes(trigger));
+};
 
 export const isBotCommand: ({ content }: { content: string }) => boolean = ({
   content,
