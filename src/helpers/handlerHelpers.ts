@@ -1,10 +1,10 @@
 import { Message } from "discord.js";
 
 export const isPoopEntry = (message: Message): boolean => {
-  const poopTriggers = ['hep', '💩'];
-  const words = message.content.toLowerCase().split(' ');
+  const poopTriggers: RegExp[] = [/\bhep\b/, /💩/];
+  const content = message.content.toLowerCase();
 
-  return poopTriggers.some(trigger => words.includes(trigger));
+  return poopTriggers.some(trigger => content.match(trigger));
 };
 
 export const isBotCommand: ({ content }: { content: string }) => boolean = ({
