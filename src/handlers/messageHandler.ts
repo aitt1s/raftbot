@@ -2,7 +2,7 @@ import { Message, MessageReaction } from "discord.js";
 import { addReaction, addEntry } from "../services/firebase";
 import { isBotCommand, isPoopEntry } from "../helpers/handlerHelpers";
 import { handleBotCommand } from "../handlers/botHandler";
-import { reactMessage } from "../services/bot";
+import { confirmPoop } from "../services/bot";
 
 export async function handleMessage(message: Message): Promise<void> {
   if (message.author.bot) return;
@@ -21,7 +21,7 @@ export async function handleMessage(message: Message): Promise<void> {
       },
     });
 
-    await reactMessage(message, "✅");
+    await confirmPoop(message);
   }
 }
 

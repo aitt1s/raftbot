@@ -1,5 +1,6 @@
 import { Message } from "discord.js";
 import { Entry, Command } from "../types/Raftbot";
+import axios from "axios";
 
 export async function sendTopShitters(
   channel: Message["channel"],
@@ -44,14 +45,31 @@ export async function sendUknownCommand(
   }
 }
 
-export async function reactMessage(
-  message: Message,
-  emoji: string
-): Promise<void> {
+export async function confirmPoop(message: Message): Promise<void> {
   try {
-    message.react(emoji);
+    await message.react("✅");
+
+    const randomQuote = await getRandomQuote();
+
+    if (randomQuote) {
+      await message.reply(randomQuote);
+    }
   } catch (error) {
-    console.log("Sending react failed", error);
+    console.log("Confirm poop failed", error);
+  }
+}
+
+export async function getRandomQuote(): Promise<string> {
+  try {
+    const {
+      data: { content, author },
+    } = await axios.get("https://api.quotable.io/random");
+
+    if (content && author) {
+      return `${content} _${author}_`;
+    }
+  } catch (error) {
+    console.log("Couldn't fetch random quote", error.message);
   }
 }
 
