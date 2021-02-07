@@ -12,15 +12,19 @@ async function migrate() {
     let onesToMigrate = [];
 
     // add the existing collection where we want to copy
-    const fromRef = db.collection("entries");
+    const fromRef = db.collection("807239396998774805");
 
     // add the target collection where we want to transfer stuff
-    const toRef = db.collection("807239396998774805");
+    const toRef = db.collection("guilds").doc("807239396998774805").collection("entries");
 
-    const snapshot = await fromRef.get();
+    const snapshot = await fromRef.where("type", "==", "like").get();
 
     snapshot.forEach(async (doc) => {
-      onesToMigrate.push(doc.data());
+      onesToMigrate.push({
+        author: doc.data().author,
+        created: doc.data().created,
+        messageId: doc.data().messageId
+      });
     });
 
     for await (const entry of onesToMigrate) {

@@ -1,6 +1,6 @@
 export enum FirebaseStructure {
   ENTRIES = "entries",
-  LIKES = "like",
+  LIKES = "likes",
   GUILDS = "guilds",
 }
 
