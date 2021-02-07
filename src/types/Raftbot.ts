@@ -1,7 +1,7 @@
-export enum EntryType {
-  CREATE = "create",
-  LIKE = "like",
-  UNLIKE = "unlike",
+export enum FirebaseStructure {
+  ENTRIES = "entries",
+  LIKES = "likes",
+  GUILDS = "guilds",
 }
 
 export enum Command {
@@ -16,7 +16,6 @@ export interface Author {
 }
 
 export interface Entry {
-  type: EntryType;
   messageId: string;
   author: Author;
   created?: string;
