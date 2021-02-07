@@ -1,8 +1,8 @@
 import { Message } from "discord.js";
 import { Command } from "../types/Raftbot";
 import {
-  getAllShitters,
-  getWeekShitters,
+  getATHShitters,
+  getWeeklyShitters,
   getDailyShitters,
 } from "../services/firebase";
 import {
@@ -18,23 +18,21 @@ const mapCommand = {
   DAILY: "daily-shitters",
 };
 
-export const handleBotCommand: (message: Message) => Promise<void> = async (
-  message
-) => {
+export async function handleBotCommand(message: Message): Promise<void> {
   const {
     content,
     channel,
     guild: { id: guildId },
   } = message;
   if (tryCommand(content, mapCommand[Command.ATH])) {
-    const shitters = await getAllShitters(guildId);
+    const shitters = await getATHShitters(guildId);
 
     await sendTopShitters(channel, shitters);
     return;
   }
 
   if (tryCommand(content, mapCommand[Command.WEEKLY])) {
-    const shitters = await getWeekShitters(guildId);
+    const shitters = await getWeeklyShitters(guildId);
 
     await sendWeekShitters(channel, shitters);
     return;
@@ -48,9 +46,8 @@ export const handleBotCommand: (message: Message) => Promise<void> = async (
   }
 
   await sendUknownCommand(channel);
-};
+}
 
-const tryCommand: (content: Message["content"], command: string) => boolean = (
-  content,
-  command
-) => content.toLowerCase().includes(command);
+function tryCommand(content: Message["content"], command: string): boolean {
+  return content.toLowerCase().includes(command);
+}

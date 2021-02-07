@@ -1,12 +1,10 @@
 import { Message, MessageReaction } from "discord.js";
-import { addEntry, addReaction } from "../services/firebase";
+import { addReaction, addEntry } from "../services/firebase";
 import { isBotCommand, isPoopEntry } from "../helpers/handlerHelpers";
 import { handleBotCommand } from "../handlers/botHandler";
 import { reactMessage } from "../services/bot";
 
-export const handleMessage: (message: Message) => Promise<void> = async (
-  message
-) => {
+export async function handleMessage(message: Message): Promise<void> {
   if (message.author.bot) return;
 
   if (isBotCommand(message)) {
@@ -25,17 +23,15 @@ export const handleMessage: (message: Message) => Promise<void> = async (
 
     await reactMessage(message, "✅");
   }
-};
+}
 
-export const handleReaction: (
-  reaction: MessageReaction
-) => Promise<void> = async (reaction) => {
+export async function handleReaction(reaction: MessageReaction): Promise<void> {
   if (reaction.me) return;
 
   const { message } = reaction;
 
   if (isPoopEntry(message)) {
-    addReaction(message.guild.id, {
+    await addReaction(message.guild.id, {
       messageId: message.id,
       author: {
         id: message.author.id,
@@ -43,8 +39,8 @@ export const handleReaction: (
       },
     });
   }
-};
+}
 
-export const handleReady: () => void = () => {
+export function handleReady(): void {
   console.log("Bot connected");
-};
+}
