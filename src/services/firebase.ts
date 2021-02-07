@@ -1,13 +1,26 @@
 import { firestore } from "firebase-admin";
-import { Entry } from "../types/Raftbot";
+import { Entry, FirebaseStructure } from "../types/Raftbot";
+
+const getCollectinRef: (
+  guildId: string,
+  collection: FirebaseStructure
+) => firestore.CollectionReference<firestore.DocumentData> = (
+  guildId,
+  collection
+) =>
+  firestore()
+    .collection(FirebaseStructure.GUILDS)
+    .doc(guildId)
+    .collection(collection);
 
 export const getAllShitters: (guildId: string) => Promise<Entry[]> = async (
   guildId
 ) => {
   try {
-    const db = firestore();
-    const entriesRef = db.collection(guildId).where("type", "==", "create");
-    const snapshot = await entriesRef.get();
+    const snapshot = await getCollectinRef(
+      guildId,
+      FirebaseStructure.ENTRIES
+    ).get();
 
     return iterateAndSortSnapshot(snapshot);
   } catch (error) {
@@ -24,12 +37,9 @@ export const getWeekShitters: (guildId: string) => Promise<Entry[]> = async (
     dateNow.setDate(dateNow.getDate() - dateNow.getDay());
     dateNow.setHours(0);
 
-    const db = firestore();
-    const entriesRef = db
-      .collection(guildId)
-      .where("type", "==", "create")
-      .where("created", ">", firestore.Timestamp.fromDate(dateNow));
-    const snapshot = await entriesRef.get();
+    const snapshot = await getCollectinRef(guildId, FirebaseStructure.ENTRIES)
+      .where("created", ">", firestore.Timestamp.fromDate(dateNow))
+      .get();
 
     return iterateAndSortSnapshot(snapshot);
   } catch (error) {
@@ -44,12 +54,9 @@ export const getDailyShitters: (guildId: string) => Promise<Entry[]> = async (
     const dateNow: Date = new Date();
     dateNow.setHours(0);
 
-    const db = firestore();
-    const entriesRef = db
-      .collection(guildId)
-      .where("type", "==", "create")
-      .where("created", ">", firestore.Timestamp.fromDate(dateNow));
-    const snapshot = await entriesRef.get();
+    const snapshot = await getCollectinRef(guildId, FirebaseStructure.ENTRIES)
+      .where("created", ">", firestore.Timestamp.fromDate(dateNow))
+      .get();
 
     return iterateAndSortSnapshot(snapshot);
   } catch (error) {
@@ -61,15 +68,27 @@ export const addEntry: (
   guildId: string,
   entry: Entry
 ) => Promise<void> = async (guildId, entry) => {
-  const db = firestore();
-
   try {
-    await db.collection(guildId).add({
+    await getCollectinRef(guildId, FirebaseStructure.ENTRIES).add({
       ...entry,
       created: firestore.FieldValue.serverTimestamp(),
     });
-  } catch (err) {
-    console.log("err");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const addReaction: (
+  guildId: string,
+  entry: Entry
+) => Promise<void> = async (guildId, entry) => {
+  try {
+    await getCollectinRef(guildId, FirebaseStructure.LIKES).add({
+      ...entry,
+      created: firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (error) {
+    console.log(error);
   }
 };
 
