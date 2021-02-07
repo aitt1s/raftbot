@@ -1,3 +1,5 @@
+import { firestore } from "firebase-admin";
+
 export enum FirebaseStructure {
   ENTRIES = "entries",
   LIKES = "likes",
@@ -8,6 +10,7 @@ export enum Command {
   WEEKLY = "WEEKLY",
   ATH = "ATH",
   DAILY = "DAILY",
+  WEEKLY_CALENDAR = "WEEKLY_CALENDAR",
 }
 
 export interface Author {
@@ -18,6 +21,6 @@ export interface Author {
 export interface Entry {
   messageId: string;
   author: Author;
-  created?: string;
+  created?: firestore.Timestamp;
   count?: number;
 }

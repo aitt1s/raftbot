@@ -18,15 +18,7 @@ export async function getATHShitters(guildId: string): Promise<Entry[]> {
 
 export async function getWeeklyShitters(guildId: string): Promise<Entry[]> {
   try {
-    const startOfWeek = DateTime.local().startOf("week");
-    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
-    const snapshot = await collectionRef
-      .where(
-        "created",
-        ">",
-        firestore.Timestamp.fromDate(startOfWeek.toJSDate())
-      )
-      .get();
+    const snapshot = await getWeeklyEntries(guildId);
 
     return iterateAndSortSnapshot(snapshot);
   } catch (error) {
@@ -47,6 +39,26 @@ export async function getDailyShitters(guildId: string): Promise<Entry[]> {
       .get();
 
     return iterateAndSortSnapshot(snapshot);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getWeeklyEntries(
+  guildId: string
+): Promise<firestore.QuerySnapshot> {
+  try {
+    const startOfWeek = DateTime.local().startOf("week");
+    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
+    const snapshot = await collectionRef
+      .where(
+        "created",
+        ">",
+        firestore.Timestamp.fromDate(startOfWeek.toJSDate())
+      )
+      .get();
+
+    return snapshot;
   } catch (error) {
     console.log(error);
   }
