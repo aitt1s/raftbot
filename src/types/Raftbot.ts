@@ -13,6 +13,7 @@ export enum Command {
   DAILY = "DAILY",
   WEEKLY_CALENDAR = "WEEKLY_CALENDAR",
   ME = "ME",
+  COMMANDS = "COMMANDS",
 }
 
 export type Dateset = {

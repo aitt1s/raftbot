@@ -111,6 +111,14 @@ export async function sendPersonalCalendar(
   }
 }
 
+export async function sendCommands(message, commands): Promise<void> {
+  try {
+    message.channel.send(renderCommands(commands));
+  } catch (error) {
+    console.log("Sending commands failed", error);
+  }
+}
+
 export async function sendUknownCommand(
   channel: Message["channel"]
 ): Promise<void> {
@@ -160,4 +168,14 @@ function formatShitters(shitters: Entry[]): string {
 
 function formatMessage(command: Command, shitters: Entry[]): string {
   return `\`\`\`Top ${command} shitters:\n${formatShitters(shitters)}\`\`\``;
+}
+
+function renderCommands(commands): string {
+  return `\`\`\`Commands:\n${formatCommands(commands)}\`\`\``;
+}
+
+function formatCommands(commands = []): string {
+  return Object.values(commands)
+    .map((command) => `!raftbot ${command}`)
+    .join("\n");
 }

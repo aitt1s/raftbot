@@ -13,15 +13,17 @@ import {
   sendDailyShitters,
   sendWeeklyCalendar,
   sendPersonalCalendar,
+  sendCommands,
   sendUknownCommand,
 } from "../services/bot";
 
-const mapCommand = {
+export const mapCommand = {
   ATH: "ath-shitters",
   WEEKLY: "weekly-shitters",
   DAILY: "daily-shitters",
   WEEKLY_CALENDAR: "weekly-calendar",
   ME: "me",
+  COMMANDS: "commands",
 };
 
 export async function handleBotCommand(message: Message): Promise<void> {
@@ -62,6 +64,11 @@ export async function handleBotCommand(message: Message): Promise<void> {
     const datasets = await getMyEntries(guildId, message.author.id);
 
     await sendPersonalCalendar(message, datasets);
+    return;
+  }
+
+  if (tryCommand(content, mapCommand[Command.COMMANDS])) {
+    await sendCommands(message, mapCommand);
     return;
   }
 
