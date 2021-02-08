@@ -1,8 +1,6 @@
 import { Message } from "discord.js";
-import { Entry, Command } from "../types/Raftbot";
+import { Entry, Command, Dateset } from "../../types/Raftbot";
 import axios from "axios";
-import { DateTime } from "luxon";
-import { firestore } from "firebase-admin";
 
 export async function sendTopShitters(
   channel: Message["channel"],
@@ -37,56 +35,70 @@ export async function sendDailyShitters(
   }
 }
 
-type Dataset = {
-  timestamp: number;
-  day: string;
-  count: number;
-};
-
 export async function sendWeeklyCalendar(
   channel: Message["channel"],
-  shitters: firestore.QuerySnapshot
+  datasets: Dateset[]
 ): Promise<void> {
   try {
-    let datasets: Dataset[] = [];
-
-    shitters.forEach((doc) => {
-      const entry = doc.data();
-      const date = DateTime.fromSeconds(entry.created.seconds);
-
-      const dayIdx = datasets.findIndex(
-        (datasetEntry: Dataset) => datasetEntry.day === date.weekdayLong
-      );
-
-      if (dayIdx > -1) {
-        datasets[dayIdx].count += 1;
-      } else {
-        datasets.push({
-          timestamp: entry.created.seconds,
-          day: date.weekdayLong,
-          count: 1,
-        });
-      }
-    });
-
-    let chartConfig = {
+    const chart = {
       type: "bar",
       data: {
-        labels: datasets.map((dataset) => dataset.day),
+        labels: datasets.map((dataset) => dataset.date.weekdayLong),
         datasets: [
           { label: "Total", data: datasets.map((dataset) => dataset.count) },
         ],
       },
     };
 
-    datasets.sort((a, b) => b.timestamp - a.timestamp);
-
     const { data } = await axios.post("https://quickchart.io/chart/create", {
       backgroundColor: "white",
-      chart: chartConfig,
+      chart,
     });
 
     channel.send({
+      files: [
+        {
+          attachment: data.url,
+          name: "total.png",
+        },
+      ],
+    });
+  } catch (error) {
+    console.log("Sending weekly shitters failed", error);
+  }
+}
+
+export async function sendPersonalCalendar(
+  message: Message,
+  datasets: Dateset[]
+): Promise<void> {
+  try {
+    const chart = {
+      type: "line",
+      data: {
+        labels: datasets.map((dataset) =>
+          dataset.date.toLocaleString({
+            weekday: "short",
+            month: "short",
+            day: "2-digit",
+          })
+        ),
+        datasets: [
+          {
+            label: message.author.username,
+            lineTension: 0.4,
+            data: datasets.map((dataset) => dataset.count),
+          },
+        ],
+      },
+    };
+
+    const { data } = await axios.post("https://quickchart.io/chart/create", {
+      backgroundColor: "white",
+      chart,
+    });
+
+    message.channel.send({
       files: [
         {
           attachment: data.url,

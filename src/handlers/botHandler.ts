@@ -5,12 +5,14 @@ import {
   getWeeklyShitters,
   getDailyShitters,
   getWeeklyEntries,
+  getMyEntries,
 } from "../services/firebase";
 import {
   sendTopShitters,
   sendWeeklyShitters,
   sendDailyShitters,
   sendWeeklyCalendar,
+  sendPersonalCalendar,
   sendUknownCommand,
 } from "../services/bot";
 
@@ -19,6 +21,7 @@ const mapCommand = {
   WEEKLY: "weekly-shitters",
   DAILY: "daily-shitters",
   WEEKLY_CALENDAR: "weekly-calendar",
+  ME: "me",
 };
 
 export async function handleBotCommand(message: Message): Promise<void> {
@@ -49,9 +52,16 @@ export async function handleBotCommand(message: Message): Promise<void> {
   }
 
   if (tryCommand(content, mapCommand[Command.WEEKLY_CALENDAR])) {
-    const shitters = await getWeeklyEntries(guildId);
+    const datasets = await getWeeklyEntries(guildId);
 
-    await sendWeeklyCalendar(channel, shitters);
+    await sendWeeklyCalendar(channel, datasets);
+    return;
+  }
+
+  if (tryCommand(content, mapCommand[Command.ME])) {
+    const datasets = await getMyEntries(guildId, message.author.id);
+
+    await sendPersonalCalendar(message, datasets);
     return;
   }
 

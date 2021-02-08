@@ -1,7 +1,12 @@
 import { firestore } from "firebase-admin";
-import { Entry, FirebaseStructure } from "../../types/Raftbot";
+import { Entry, FirebaseStructure, Dateset } from "../../types/Raftbot";
 import { DateTime } from "luxon";
-import { getCollectinRef, iterateAndSortSnapshot } from "./firebaseHelpers";
+import {
+  getCollectinRef,
+  sortByUserEntries,
+  sortByDailyOccurencesInWeek,
+  sortByDailyOccurencesPerUser,
+} from "./firebaseHelpers";
 
 DateTime.local().setZone(process.env.TZ || "Europe/Helsinki");
 
@@ -10,7 +15,7 @@ export async function getATHShitters(guildId: string): Promise<Entry[]> {
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
     const snapshot = await collectionRef.get();
 
-    return iterateAndSortSnapshot(snapshot);
+    return sortByUserEntries(snapshot);
   } catch (error) {
     console.log(error);
   }
@@ -18,9 +23,17 @@ export async function getATHShitters(guildId: string): Promise<Entry[]> {
 
 export async function getWeeklyShitters(guildId: string): Promise<Entry[]> {
   try {
-    const snapshot = await getWeeklyEntries(guildId);
+    const startOfWeek = DateTime.local().startOf("week");
+    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
+    const snapshot = await collectionRef
+      .where(
+        "created",
+        ">",
+        firestore.Timestamp.fromDate(startOfWeek.toJSDate())
+      )
+      .get();
 
-    return iterateAndSortSnapshot(snapshot);
+    return sortByUserEntries(snapshot);
   } catch (error) {
     console.log(error);
   }
@@ -38,15 +51,13 @@ export async function getDailyShitters(guildId: string): Promise<Entry[]> {
       )
       .get();
 
-    return iterateAndSortSnapshot(snapshot);
+    return sortByUserEntries(snapshot);
   } catch (error) {
     console.log(error);
   }
 }
 
-export async function getWeeklyEntries(
-  guildId: string
-): Promise<firestore.QuerySnapshot> {
+export async function getWeeklyEntries(guildId: string): Promise<Dateset[]> {
   try {
     const startOfWeek = DateTime.local().startOf("week");
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
@@ -58,7 +69,21 @@ export async function getWeeklyEntries(
       )
       .get();
 
-    return snapshot;
+    return sortByDailyOccurencesInWeek(snapshot);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getMyEntries(
+  guildId: string,
+  userId: string
+): Promise<Dateset[]> {
+  try {
+    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
+    const snapshot = await collectionRef.where("author.id", "==", userId).get();
+
+    return sortByDailyOccurencesPerUser(snapshot);
   } catch (error) {
     console.log(error);
   }
