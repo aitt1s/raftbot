@@ -90,7 +90,7 @@ export async function handleBotCommand(message: Message): Promise<void> {
       freq: Frequency.DAILY,
     });
 
-    await sendPersonalCalendar(message, datasets, { unit: "day" });
+    await sendPersonalCalendar(message, datasets, { unit: "week" });
     return;
   }
 
@@ -100,7 +100,7 @@ export async function handleBotCommand(message: Message): Promise<void> {
       freq: Frequency.DAILY,
     });
 
-    await sendPersonalCalendar(message, datasets, { unit: "day" });
+    await sendPersonalCalendar(message, datasets, { unit: "week" });
     return;
   }
 
