@@ -2,10 +2,10 @@ import { Message } from "discord.js";
 import { Command } from "../types/Raftbot";
 import {
   getATHShitters,
-  getWeeklyShitters,
+  getTopShitters,
   getDailyShitters,
-  getWeeklyEntries,
-  getMyEntries,
+  getTotalShits,
+  getMyShits,
 } from "../services/firebase";
 import {
   sendTopShitters,
@@ -16,14 +16,18 @@ import {
   sendCommands,
   sendUknownCommand,
 } from "../services/bot";
+import { Frequency } from "rrule";
 
 export const mapCommand = {
   ATH: "ath-shitters",
+  MONTHLY: "monthly-shitters",
   WEEKLY: "weekly-shitters",
   DAILY: "daily-shitters",
   WEEKLY_CALENDAR: "weekly-calendar",
-  ME: "me",
-  COMMANDS: "commands",
+  MONTHLY_ME: "monthly-me",
+  WEEKLY_ME: "weekly-me",
+  DAILY_ME: "daily-me",
+  HELP: "help",
 };
 
 export async function handleBotCommand(message: Message): Promise<void> {
@@ -40,34 +44,67 @@ export async function handleBotCommand(message: Message): Promise<void> {
   }
 
   if (tryCommand(content, mapCommand[Command.WEEKLY])) {
-    const shitters = await getWeeklyShitters(guildId);
+    const shitters = await getTopShitters(guildId, { unit: "week" });
 
     await sendWeeklyShitters(channel, shitters);
     return;
   }
 
   if (tryCommand(content, mapCommand[Command.DAILY])) {
-    const shitters = await getDailyShitters(guildId);
+    const shitters = await getTopShitters(guildId, { unit: "day" });
+
+    await sendDailyShitters(channel, shitters);
+    return;
+  }
+
+  if (tryCommand(content, mapCommand[Command.MONTHLY])) {
+    const shitters = await getTopShitters(guildId, { unit: "month" });
 
     await sendDailyShitters(channel, shitters);
     return;
   }
 
   if (tryCommand(content, mapCommand[Command.WEEKLY_CALENDAR])) {
-    const datasets = await getWeeklyEntries(guildId);
+    const datasets = await getTotalShits(guildId, {
+      unit: "week",
+      freq: Frequency.DAILY,
+    });
 
     await sendWeeklyCalendar(channel, datasets);
     return;
   }
 
-  if (tryCommand(content, mapCommand[Command.ME])) {
-    const datasets = await getMyEntries(guildId, message.author.id);
+  if (tryCommand(content, mapCommand[Command.DAILY_ME])) {
+    const datasets = await getMyShits(guildId, message.author.id, {
+      unit: "day",
+      freq: Frequency.DAILY,
+    });
 
-    await sendPersonalCalendar(message, datasets);
+    await sendPersonalCalendar(message, datasets, { unit: "day" });
     return;
   }
 
-  if (tryCommand(content, mapCommand[Command.COMMANDS])) {
+  if (tryCommand(content, mapCommand[Command.WEEKLY_ME])) {
+    const datasets = await getMyShits(guildId, message.author.id, {
+      unit: "week",
+      freq: Frequency.DAILY,
+    });
+
+    await sendPersonalCalendar(message, datasets, { unit: "day" });
+    return;
+  }
+
+  if (tryCommand(content, mapCommand[Command.MONTHLY_ME])) {
+    const datasets = await getMyShits(guildId, message.author.id, {
+      unit: "month",
+      freq: Frequency.DAILY,
+    });
+
+    await sendPersonalCalendar(message, datasets, { unit: "day" });
+    return;
+  }
+
+  if (tryCommand(content, mapCommand[Command.HELP])) {
     await sendCommands(message, mapCommand);
     return;
   }

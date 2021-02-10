@@ -1,39 +1,44 @@
 import { firestore } from "firebase-admin";
 import { Entry, FirebaseStructure, Dateset } from "../../types/Raftbot";
-import { DateTime } from "luxon";
 import {
   getCollectinRef,
-  sortByUserEntries,
-  sortByDailyOccurencesInWeek,
-  sortByDailyOccurencesPerUser,
+  sortTopShitters,
+  sortTotalShits,
+  sortMyShits,
 } from "./firebaseHelpers";
 
-DateTime.local().setZone(process.env.TZ || "Europe/Helsinki");
+import { startOf } from "../../helpers/dateHelpers";
+
+import { DurationUnit } from "luxon";
+import { Frequency } from "rrule";
 
 export async function getATHShitters(guildId: string): Promise<Entry[]> {
   try {
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
     const snapshot = await collectionRef.get();
 
-    return sortByUserEntries(snapshot);
+    return sortTopShitters(snapshot);
   } catch (error) {
     console.log(error);
   }
 }
 
-export async function getWeeklyShitters(guildId: string): Promise<Entry[]> {
+export async function getTopShitters(
+  guildId: string,
+  {
+    unit = "week",
+  }: {
+    unit: DurationUnit;
+  }
+): Promise<Entry[]> {
   try {
-    const startOfWeek = DateTime.local().startOf("week");
+    const start = startOf(unit);
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
     const snapshot = await collectionRef
-      .where(
-        "created",
-        ">",
-        firestore.Timestamp.fromDate(startOfWeek.toJSDate())
-      )
+      .where("created", ">", firestore.Timestamp.fromDate(start.toJSDate()))
       .get();
 
-    return sortByUserEntries(snapshot);
+    return sortTopShitters(snapshot);
   } catch (error) {
     console.log(error);
   }
@@ -41,7 +46,7 @@ export async function getWeeklyShitters(guildId: string): Promise<Entry[]> {
 
 export async function getDailyShitters(guildId: string): Promise<Entry[]> {
   try {
-    const startOfDay = DateTime.local().startOf("day");
+    const startOfDay = startOf("day");
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
     const snapshot = await collectionRef
       .where(
@@ -51,39 +56,55 @@ export async function getDailyShitters(guildId: string): Promise<Entry[]> {
       )
       .get();
 
-    return sortByUserEntries(snapshot);
+    return sortTopShitters(snapshot);
   } catch (error) {
     console.log(error);
   }
 }
 
-export async function getWeeklyEntries(guildId: string): Promise<Dateset[]> {
-  try {
-    const startOfWeek = DateTime.local().startOf("week");
-    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
-    const snapshot = await collectionRef
-      .where(
-        "created",
-        ">",
-        firestore.Timestamp.fromDate(startOfWeek.toJSDate())
-      )
-      .get();
-
-    return sortByDailyOccurencesInWeek(snapshot);
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-export async function getMyEntries(
+export async function getTotalShits(
   guildId: string,
-  userId: string
+  {
+    unit = "week",
+    freq = Frequency.DAILY,
+  }: {
+    unit: DurationUnit;
+    freq: Frequency;
+  }
 ): Promise<Dateset[]> {
   try {
+    const start = startOf(unit);
     const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
-    const snapshot = await collectionRef.where("author.id", "==", userId).get();
+    const snapshot = await collectionRef
+      .where("created", ">", firestore.Timestamp.fromDate(start.toJSDate()))
+      .get();
 
-    return sortByDailyOccurencesPerUser(snapshot);
+    return sortTotalShits(snapshot, { unit, freq });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function getMyShits(
+  guildId: string,
+  userId: string,
+  {
+    unit = "week",
+    freq = Frequency.DAILY,
+  }: {
+    unit: DurationUnit;
+    freq: Frequency;
+  }
+): Promise<Dateset[]> {
+  try {
+    const start = startOf(unit);
+    const collectionRef = getCollectinRef(guildId, FirebaseStructure.ENTRIES);
+    const snapshot = await collectionRef
+      .where("author.id", "==", userId)
+      .where("created", ">", firestore.Timestamp.fromDate(start.toJSDate()))
+      .get();
+
+    return sortMyShits(snapshot, { unit, freq });
   } catch (error) {
     console.log(error);
   }

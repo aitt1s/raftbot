@@ -1,6 +1,7 @@
 import { Message } from "discord.js";
 import { Entry, Command, Dateset } from "../../types/Raftbot";
 import axios from "axios";
+import { DurationUnit } from "luxon";
 
 export async function sendTopShitters(
   channel: Message["channel"],
@@ -70,11 +71,12 @@ export async function sendWeeklyCalendar(
 
 export async function sendPersonalCalendar(
   message: Message,
-  datasets: Dateset[]
+  datasets: Dateset[],
+  { unit }: { unit: DurationUnit }
 ): Promise<void> {
   try {
     const chart = {
-      type: "line",
+      type: unit === "day" ? "bar" : "line",
       data: {
         labels: datasets.map((dataset) =>
           dataset.date.toLocaleString({
@@ -167,7 +169,9 @@ function formatShitters(shitters: Entry[]): string {
 }
 
 function formatMessage(command: Command, shitters: Entry[]): string {
-  return `\`\`\`Top ${command} shitters:\n${formatShitters(shitters)}\`\`\``;
+  return `\`\`\`Top ${command} shitters:\n${formatShitters(
+    shitters
+  )}\n\nTotal ${total(shitters)} shits taken 🚀🚽 \`\`\``;
 }
 
 function renderCommands(commands): string {
@@ -178,4 +182,8 @@ function formatCommands(commands = []): string {
   return Object.values(commands)
     .map((command) => `!raftbot ${command}`)
     .join("\n");
+}
+
+function total(shitters: Entry[]) {
+  return shitters.reduce((acc, shitter) => (acc += shitter.count || 0), 0);
 }

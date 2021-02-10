@@ -9,11 +9,14 @@ export enum FirebaseStructure {
 
 export enum Command {
   WEEKLY = "WEEKLY",
+  MONTHLY = "MONTHLY",
   ATH = "ATH",
   DAILY = "DAILY",
   WEEKLY_CALENDAR = "WEEKLY_CALENDAR",
-  ME = "ME",
-  COMMANDS = "COMMANDS",
+  MONTHLY_ME = "MONTHLY_ME",
+  WEEKLY_ME = "WEEKLY_ME",
+  DAILY_ME = "DAILY_ME",
+  HELP = "HELP",
 }
 
 export type Dateset = {

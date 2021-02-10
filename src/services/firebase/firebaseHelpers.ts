@@ -1,6 +1,15 @@
 import { firestore } from "firebase-admin";
-import { DateTime } from "luxon";
+import { DateTime, DurationUnit } from "luxon";
 import { Entry, FirebaseStructure, Dateset } from "../../types/Raftbot";
+import {
+  generateDates,
+  startOf,
+  numberOfDays,
+} from "../../helpers/dateHelpers";
+
+import { Frequency } from "rrule";
+
+DateTime.local().setZone(process.env.TZ || "Europe/Helsinki");
 
 export function getCollectinRef(
   guildId: string,
@@ -12,7 +21,7 @@ export function getCollectinRef(
     .collection(collection);
 }
 
-export function sortByUserEntries(snapshot: firestore.QuerySnapshot): Entry[] {
+export function sortTopShitters(snapshot: firestore.QuerySnapshot): Entry[] {
   let shitters = [];
 
   snapshot.forEach((doc) => {
@@ -40,59 +49,82 @@ export function sortByUserEntries(snapshot: firestore.QuerySnapshot): Entry[] {
   return shitters;
 }
 
-export function sortByDailyOccurencesInWeek(
-  snapshot: firestore.QuerySnapshot
+export function sortTotalShits(
+  snapshot: firestore.QuerySnapshot,
+  {
+    unit = "week",
+    freq = Frequency.WEEKLY,
+  }: {
+    unit: DurationUnit;
+    freq: Frequency;
+  }
 ): Dateset[] {
-  let datesets: Dateset[] = [];
+  const start = startOf(unit);
+  const days = numberOfDays(start, unit);
+
+  const generatedDates = generateDates({
+    start: start.toJSDate(),
+    freq,
+    count: days,
+  });
+
+  let datesets: Dateset[] = generatedDates.map((date) => ({
+    date: DateTime.fromJSDate(date),
+    count: 0,
+  }));
 
   snapshot.forEach((doc) => {
     const entry = doc.data();
-    const date = DateTime.fromSeconds(entry.created.seconds);
+    const docDate = DateTime.fromSeconds(entry.created.seconds);
 
-    const dayIdx = datesets.findIndex(
-      (datasetEntry: Dateset) =>
-        datasetEntry.date.weekdayLong === date.weekdayLong
+    const dayIdx = datesets.findIndex((datasetEntry: Dateset) =>
+      datasetEntry.date.hasSame(docDate, "day")
     );
 
     if (dayIdx > -1) {
       datesets[dayIdx].count += 1;
-    } else {
-      datesets.push({
-        date,
-        count: 1,
-      });
     }
   });
-
-  datesets.sort((a, b) => b.date.toMillis() - a.date.toMillis());
 
   return datesets;
 }
 
-export function sortByDailyOccurencesPerUser(
-  snapshot: firestore.QuerySnapshot
+export function sortMyShits(
+  snapshot: firestore.QuerySnapshot,
+  {
+    unit = "week",
+    freq = Frequency.WEEKLY,
+  }: {
+    unit: DurationUnit;
+    freq: Frequency;
+  }
 ): Dateset[] {
-  let datesets: Dateset[] = [];
+  const start = startOf(unit);
+  const days = numberOfDays(start, unit);
+
+  const generatedDates = generateDates({
+    start: start.toJSDate(),
+    freq,
+    count: days,
+  });
+
+  let datesets: Dateset[] = generatedDates.map((date) => ({
+    date: DateTime.fromJSDate(date),
+    count: 0,
+  }));
 
   snapshot.forEach((doc) => {
     const entry = doc.data();
-    const date = DateTime.fromSeconds(entry.created.seconds);
+    const docDate = DateTime.fromSeconds(entry.created.seconds);
 
     const dayIdx = datesets.findIndex((datasetEntry: Dateset) =>
-      date.hasSame(datasetEntry.date, "day")
+      datasetEntry.date.hasSame(docDate, "day")
     );
 
     if (dayIdx > -1) {
       datesets[dayIdx].count += 1;
-    } else {
-      datesets.push({
-        date,
-        count: 1,
-      });
     }
   });
-
-  datesets.sort((a, b) => a.date.toMillis() - b.date.toMillis());
 
   return datesets;
 }

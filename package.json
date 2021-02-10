@@ -13,6 +13,7 @@
     "run-migrate-script": "tsc ./scripts/migrateCollection.ts && node ./scripts/migrateCollection.js"
   },
   "devDependencies": {
+    "@types/luxon": "^1.25.1",
     "@types/node": "^14.14.25",
     "nodemon": "^2.0.7",
     "ts-node": "^9.1.1",
@@ -23,7 +24,8 @@
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
     "firebase-admin": "^9.4.2",
-    "luxon": "^1.25.0"
+    "luxon": "^1.25.0",
+    "rrule": "^2.6.8"
   },
   "engines": {
     "node": "14.15.1"
