@@ -216,15 +216,9 @@ function getFirstAndLast(shitters) {
 function formatMessage(shitters: Entry[], configs): string {
   const [first, last] = getFirstAndLast(shitters);
   console.log(first.created);
-  return `\`\`\`Top ${
-    configs?.unit || "total"
-  } shitters (${DateTime.fromSeconds(first.created.seconds).toFormat(
-    "dd.MM"
-  )} - ${DateTime.fromSeconds(last.created.seconds).toFormat(
-    "dd.MM"
-  )}):\n${formatShitters(shitters)}\n\nTotal ${total(
+  return `\`\`\`Top ${configs?.unit || "total"} shitters:\n${formatShitters(
     shitters
-  )} shits taken 🚀🚽 \`\`\``;
+  )}\n\nTotal ${total(shitters)} shits taken 🚀🚽 \`\`\``;
 }
 
 function total(shitters: Entry[]) {
