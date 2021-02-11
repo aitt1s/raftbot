@@ -1,52 +1,67 @@
 import { Message } from "discord.js";
-import { Entry, Command, Dateset } from "../../types/Raftbot";
+import { Entry, Dateset } from "../../types/Raftbot";
 import axios from "axios";
-import { DurationUnit } from "luxon";
+import { DateTime } from "luxon";
+import { units, commands, types } from "../../helpers/normalizers";
 
-export async function sendTopShitters(
-  channel: Message["channel"],
-  shitters: Entry[]
-): Promise<void> {
+export async function sendToChannel(message, entries, configs) {
   try {
-    await channel.send(formatMessage(Command.ATH, shitters));
+    if (configs?.command === "me") {
+      sendPersonal(message, entries, configs);
+      return;
+    }
+
+    if (configs?.command === "total") {
+      sendTotal(message, entries, configs);
+      return;
+    }
+
+    if (configs?.command === "top") {
+      if (!configs?.type || configs.type === "list") {
+        sendTop(message, entries, configs);
+        return;
+      }
+
+      if (configs.type && configs.type !== "list") {
+        sendTopGraph(message, entries, configs);
+        return;
+      }
+    }
+
+    if (configs.type) {
+      sendTopGraph(message, entries, configs);
+      return;
+    }
+
+    sendTop(message, entries, configs);
   } catch (error) {
     console.log("Sending ATH shitters failed", error);
   }
 }
 
-export async function sendWeeklyShitters(
-  channel: Message["channel"],
-  shitters: Entry[]
+export async function sendTop(
+  message: Message,
+  shitters: Entry[],
+  configs
 ): Promise<void> {
   try {
-    channel.send(formatMessage(Command.WEEKLY, shitters));
+    await message.channel.send(formatMessage(shitters, configs));
   } catch (error) {
-    console.log("Sending weekly shitters failed", error);
+    console.log("Sending ATH shitters failed", error);
   }
 }
 
-export async function sendDailyShitters(
-  channel: Message["channel"],
-  shitters: Entry[]
-): Promise<void> {
-  try {
-    channel.send(formatMessage(Command.DAILY, shitters));
-  } catch (error) {
-    console.log("Sending daily shitters failed", error);
-  }
-}
-
-export async function sendWeeklyCalendar(
-  channel: Message["channel"],
-  datasets: Dateset[]
-): Promise<void> {
+export async function sendTopGraph(message, shitters, configs) {
   try {
     const chart = {
-      type: "bar",
+      type: configs?.type || "bar",
       data: {
-        labels: datasets.map((dataset) => dataset.date.weekdayLong),
+        labels: shitters.map((entry) => entry.author.username),
         datasets: [
-          { label: "Total", data: datasets.map((dataset) => dataset.count) },
+          {
+            label: configs.command || "Total",
+            data: shitters.map((entry) => entry.count),
+          },
         ],
       },
     };
@@ -56,7 +71,7 @@ export async function sendWeeklyCalendar(
       chart,
     });
 
-    channel.send({
+    message.channel.send({
       files: [
         {
           attachment: data.url,
@@ -69,14 +84,14 @@ export async function sendWeeklyCalendar(
   }
 }
 
-export async function sendPersonalCalendar(
+export async function sendTotal(
   message: Message,
   datasets: Dateset[],
-  { unit }: { unit: DurationUnit }
+  configs
 ): Promise<void> {
   try {
     const chart = {
-      type: unit === "day" ? "bar" : "line",
+      type: configs?.type || "bar",
       data: {
         labels: datasets.map((dataset) =>
           dataset.date.toLocaleString({
@@ -87,8 +102,7 @@ export async function sendPersonalCalendar(
         ),
         datasets: [
           {
-            label: message.author.username,
-            lineTension: 0.4,
+            label: configs.command || "Total",
             data: datasets.map((dataset) => dataset.count),
           },
         ],
@@ -113,21 +127,47 @@ export async function sendPersonalCalendar(
   }
 }
 
-export async function sendCommands(message, commands): Promise<void> {
-  try {
-    message.channel.send(renderCommands(commands));
-  } catch (error) {
-    console.log("Sending commands failed", error);
-  }
-}
-
-export async function sendUknownCommand(
-  channel: Message["channel"]
+export async function sendPersonal(
+  message: Message,
+  datasets: Dateset[],
+  configs
 ): Promise<void> {
   try {
-    channel.send("Uknown command :(");
+    const chart = {
+      type: configs?.type || "bar",
+      data: {
+        labels: datasets.map((dataset) =>
+          dataset.date.toLocaleString({
+            weekday: "short",
+            month: "short",
+            day: "2-digit",
+          })
+        ),
+        datasets: [
+          {
+            label: message.author.username,
+            lineTension: 0.1,
+            data: datasets.map((dataset) => dataset.count),
+          },
+        ],
+      },
+    };
+
+    const { data } = await axios.post("https://quickchart.io/chart/create", {
+      backgroundColor: "white",
+      chart,
+    });
+
+    message.channel.send({
+      files: [
+        {
+          attachment: data.url,
+          name: "total.png",
+        },
+      ],
+    });
   } catch (error) {
-    console.log("Sending unknown command error failed", error);
+    console.log("Sending weekly shitters failed", error);
   }
 }
 
@@ -168,22 +208,45 @@ function formatShitters(shitters: Entry[]): string {
     .join("\n");
 }
 
-function formatMessage(command: Command, shitters: Entry[]): string {
-  return `\`\`\`Top ${command} shitters:\n${formatShitters(
+function getFirstAndLast(shitters) {
+  const { length, [length - 1]: last } = shitters;
+  return [shitters[0], last];
+}
+
+function formatMessage(shitters: Entry[], configs): string {
+  const [first, last] = getFirstAndLast(shitters);
+  console.log(first.created);
+  return `\`\`\`Top ${
+    configs?.unit || "total"
+  } shitters (${DateTime.fromSeconds(first.created.seconds).toFormat(
+    "dd.MM"
+  )} - ${DateTime.fromSeconds(last.created.seconds).toFormat(
+    "dd.MM"
+  )}):\n${formatShitters(shitters)}\n\nTotal ${total(
     shitters
-  )}\n\nTotal ${total(shitters)} shits taken 🚀🚽 \`\`\``;
-}
-
-function renderCommands(commands): string {
-  return `\`\`\`Commands:\n${formatCommands(commands)}\`\`\``;
-}
-
-function formatCommands(commands = []): string {
-  return Object.values(commands)
-    .map((command) => `!raftbot ${command}`)
-    .join("\n");
+  )} shits taken 🚀🚽 \`\`\``;
 }
 
 function total(shitters: Entry[]) {
   return shitters.reduce((acc, shitter) => (acc += shitter.count || 0), 0);
+}
+
+function formatUnits() {
+  return `Units:\n\t${Object.values(units).join("\n\t")}`;
+}
+
+function formatCommands() {
+  return `Commands:\n\t${Object.values(commands).join("\n\t")}`;
+}
+
+function formatTypes() {
+  return `Types:\n\t${Object.values(types).join("\n\t")}`;
+}
+
+const helpText = `You can use units, formats and types in order you wish, for example: \n\t!raftbot weekly top \n\t!rafbot top week\n\t!raftbot daily pie`;
+
+export async function sendHelp(message) {
+  message.channel.send(
+    `\`\`\`Usage 🧑‍💻\n${formatUnits()}\n${formatUnits()}\n${formatCommands()}\n${formatTypes()}\n${helpText}\`\`\``
+  );
 }

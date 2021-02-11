@@ -7,18 +7,6 @@ export enum FirebaseStructure {
   GUILDS = "guilds",
 }
 
-export enum Command {
-  WEEKLY = "WEEKLY",
-  MONTHLY = "MONTHLY",
-  ATH = "ATH",
-  DAILY = "DAILY",
-  WEEKLY_CALENDAR = "WEEKLY_CALENDAR",
-  MONTHLY_ME = "MONTHLY_ME",
-  WEEKLY_ME = "WEEKLY_ME",
-  DAILY_ME = "DAILY_ME",
-  HELP = "HELP",
-}
-
 export type Dateset = {
   date: DateTime;
   count?: number;
@@ -36,4 +24,10 @@ export type Entry = {
   author: Author;
   created?: firestore.Timestamp;
   count?: number;
+};
+
+export type CommandConfig = {
+  unit?: string;
+  command?: string;
+  type?: string;
 };

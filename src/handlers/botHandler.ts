@@ -1,117 +1,52 @@
 import { Message } from "discord.js";
-import { Command } from "../types/Raftbot";
-import {
-  getATHShitters,
-  getTopShitters,
-  getDailyShitters,
-  getTotalShits,
-  getMyShits,
-} from "../services/firebase";
-import {
-  sendTopShitters,
-  sendWeeklyShitters,
-  sendDailyShitters,
-  sendWeeklyCalendar,
-  sendPersonalCalendar,
-  sendCommands,
-  sendUknownCommand,
-} from "../services/bot";
-import { Frequency } from "rrule";
+import { CommandConfig } from "../types/Raftbot";
+import { getEntries } from "../services/firebase";
+import { sendToChannel, sendHelp } from "../services/bot";
+import { normalize } from "../helpers/normalizers";
+import { sortEntriesByAction } from "../services/firebase/firebaseHelpers";
 
-export const mapCommand = {
-  ATH: "ath-shitters",
-  MONTHLY: "monthly-shitters",
-  WEEKLY: "weekly-shitters",
-  DAILY: "daily-shitters",
-  WEEKLY_CALENDAR: "weekly-calendar",
-  MONTHLY_ME: "monthly-me",
-  WEEKLY_ME: "weekly-me",
-  DAILY_ME: "daily-me",
-  HELP: "help",
-};
+let prefix: string = "!raftbot";
 
 export async function handleBotCommand(message: Message): Promise<void> {
-  const {
-    content,
-    channel,
-    guild: { id: guildId },
-  } = message;
-  if (tryCommand(content, mapCommand[Command.ATH])) {
-    const shitters = await getATHShitters(guildId);
+  const contentString = message.content
+    .slice(prefix.length)
+    .trim()
+    .replace("-", " ")
+    .toLowerCase();
 
-    await sendTopShitters(channel, shitters);
-    return;
-  }
+  const contentArguments = contentString.split(" ");
 
-  if (tryCommand(content, mapCommand[Command.WEEKLY])) {
-    const shitters = await getTopShitters(guildId, { unit: "week" });
+  const configs: CommandConfig = {};
+  const found = [];
 
-    await sendWeeklyShitters(channel, shitters);
-    return;
-  }
+  for (const argument of contentArguments) {
+    ["unit", "command", "type"].forEach((config) => {
+      const value = normalize[config](argument);
 
-  if (tryCommand(content, mapCommand[Command.DAILY])) {
-    const shitters = await getTopShitters(guildId, { unit: "day" });
-
-    await sendDailyShitters(channel, shitters);
-    return;
-  }
-
-  if (tryCommand(content, mapCommand[Command.MONTHLY])) {
-    const shitters = await getTopShitters(guildId, { unit: "month" });
-
-    await sendDailyShitters(channel, shitters);
-    return;
-  }
-
-  if (tryCommand(content, mapCommand[Command.WEEKLY_CALENDAR])) {
-    const datasets = await getTotalShits(guildId, {
-      unit: "week",
-      freq: Frequency.DAILY,
+      if (value) {
+        configs[config] = value;
+        found.push(argument);
+      }
     });
+  }
 
-    await sendWeeklyCalendar(channel, datasets);
+  if (!found.length) {
+    message.channel.send("Did not found any valid commands 🧐");
     return;
   }
 
-  if (tryCommand(content, mapCommand[Command.DAILY_ME])) {
-    const datasets = await getMyShits(guildId, message.author.id, {
-      unit: "day",
-      freq: Frequency.DAILY,
-    });
+  const notFound = contentArguments.filter((item) => found.indexOf(item) < 0);
 
-    await sendPersonalCalendar(message, datasets, { unit: "day" });
+  if (notFound.length > 0) {
+    message.channel.send(`Found unknown commands: ${notFound.join(", ")} 😥`);
+  }
+
+  if (configs.command === "help") {
+    await sendHelp(message);
     return;
   }
 
-  if (tryCommand(content, mapCommand[Command.WEEKLY_ME])) {
-    const datasets = await getMyShits(guildId, message.author.id, {
-      unit: "week",
-      freq: Frequency.DAILY,
-    });
-
-    await sendPersonalCalendar(message, datasets, { unit: "week" });
-    return;
-  }
-
-  if (tryCommand(content, mapCommand[Command.MONTHLY_ME])) {
-    const datasets = await getMyShits(guildId, message.author.id, {
-      unit: "month",
-      freq: Frequency.DAILY,
-    });
-
-    await sendPersonalCalendar(message, datasets, { unit: "week" });
-    return;
-  }
-
-  if (tryCommand(content, mapCommand[Command.HELP])) {
-    await sendCommands(message, mapCommand);
-    return;
-  }
-
-  await sendUknownCommand(channel);
-}
-
-function tryCommand(content: Message["content"], command: string): boolean {
-  return content.toLowerCase().includes(command);
+  const snapshot = await getEntries(message, configs);
+  const sorted = sortEntriesByAction(snapshot, configs);
+  await sendToChannel(message, sorted, configs);
 }

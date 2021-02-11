@@ -1,5 +1,6 @@
 import { DateTime, DurationUnit } from "luxon";
 import { RRule, Frequency } from "rrule";
+import { normalize } from "../helpers/normalizers";
 
 type DateConfig = {
   count?: number;
@@ -32,12 +33,16 @@ export function nowWithTz(): DateTime {
   return DateTime.local().setZone(process.env.TZ || "Europe/Helsinki");
 }
 
-export function startOf(unit: DurationUnit): DateTime {
-  return nowWithTz().startOf(unit);
+export function startOf(unit: string | DurationUnit): DateTime {
+  if (normalize.startOf(unit)) {
+    return nowWithTz().minus({ [normalize.toLuxonUnit(unit)]: 1 });
+  } else {
+    return nowWithTz().startOf(normalize.toLuxonUnit(unit) as DurationUnit);
+  }
 }
 
 export function numberOfDays(date: DateTime, unit: string): number {
-  switch (unit) {
+  switch (normalize.toLuxonUnit(unit)) {
     case "day":
       return 1;
 

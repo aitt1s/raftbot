@@ -1,5 +1,5 @@
 import { firestore } from "firebase-admin";
-import { DateTime, DurationUnit } from "luxon";
+import { DateTime } from "luxon";
 import { Entry, FirebaseStructure, Dateset } from "../../types/Raftbot";
 import {
   generateDates,
@@ -19,6 +19,18 @@ export function getCollectinRef(
     .collection(FirebaseStructure.GUILDS)
     .doc(guildId)
     .collection(collection);
+}
+
+export function sortEntriesByAction(snapshot, configs) {
+  if (configs.command === "me") {
+    return sortMyShits(snapshot, configs);
+  }
+
+  if (configs.command === "total") {
+    return sortTotalShits(snapshot, configs);
+  }
+
+  return sortTopShitters(snapshot);
 }
 
 export function sortTopShitters(snapshot: firestore.QuerySnapshot): Entry[] {
@@ -51,20 +63,14 @@ export function sortTopShitters(snapshot: firestore.QuerySnapshot): Entry[] {
 
 export function sortTotalShits(
   snapshot: firestore.QuerySnapshot,
-  {
-    unit = "week",
-    freq = Frequency.WEEKLY,
-  }: {
-    unit: DurationUnit;
-    freq: Frequency;
-  }
+  configs
 ): Dateset[] {
-  const start = startOf(unit);
-  const days = numberOfDays(start, unit);
+  const start = startOf(configs.unit || "month");
+  const days = numberOfDays(start, configs.unit || "month");
 
   const generatedDates = generateDates({
     start: start.toJSDate(),
-    freq,
+    freq: Frequency.DAILY,
     count: days,
   });
 
@@ -91,20 +97,14 @@ export function sortTotalShits(
 
 export function sortMyShits(
   snapshot: firestore.QuerySnapshot,
-  {
-    unit = "week",
-    freq = Frequency.WEEKLY,
-  }: {
-    unit: DurationUnit;
-    freq: Frequency;
-  }
+  configs
 ): Dateset[] {
-  const start = startOf(unit);
-  const days = numberOfDays(start, unit);
+  const start = startOf(configs.unit || "month");
+  const days = numberOfDays(start, configs.unit || "month");
 
   const generatedDates = generateDates({
     start: start.toJSDate(),
-    freq,
+    freq: Frequency.DAILY,
     count: days,
   });
 
