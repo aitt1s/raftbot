@@ -243,7 +243,7 @@ function formatTypes() {
   return `Types:\n\t${Object.values(types).join("\n\t")}`;
 }
 
-const helpText = `You can use units, formats and types in order you wish, for example: \n\t!raftbot weekly top \n\t!rafbot top week\n\t!raftbot daily pie`;
+const helpText = `You can use units, commands and types in order you wish, for example: \n\t!raftbot weekly top \n\t!rafbot top week\n\t!raftbot daily pie`;
 
 export async function sendHelp(message) {
   message.channel.send(
