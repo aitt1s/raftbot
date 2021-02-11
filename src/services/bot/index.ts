@@ -241,6 +241,6 @@ const helpText = `You can use units, commands and types in order you wish, for e
 
 export async function sendHelp(message) {
   message.channel.send(
-    `\`\`\`Usage 🧑‍💻\n${formatUnits()}\n${formatUnits()}\n${formatCommands()}\n${formatTypes()}\n${helpText}\`\`\``
+    `\`\`\`Usage 🧑‍💻\n${formatUnits()}\n${formatCommands()}\n${formatTypes()}\n${helpText}\`\`\``
   );
 }
