@@ -230,7 +230,7 @@ function formatUnits() {
 }
 
 function formatCommands() {
-  return `Commands:\n\t${Object.values(commands).join("\n\t")}`;
+  return `Commands:\n\t${Object.keys(commands).join("\n\t")}`;
 }
 
 function formatTypes() {
