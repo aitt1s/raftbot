@@ -1,10 +1,15 @@
 import { firestore } from "firebase-admin";
-import { FirebaseStructure, CommandConfig } from "../../types/Raftbot";
+import {
+  FirebaseStructure,
+  InputCommand,
+  InputUnit,
+  InputType,
+} from "../../types/Raftbot";
 import { getCollectinRef } from "./firebaseHelpers";
-import { startOf } from "../../helpers/dateHelpers";
 import { Message } from "discord.js";
+import { InputConfig } from "../../handlers/inputConfig";
 
-export async function getEntries(message: Message, configs: CommandConfig) {
+export async function getEntries(message: Message, configs: InputConfig) {
   try {
     let query: any = getCollectinRef(
       message.guild.id,
@@ -12,7 +17,7 @@ export async function getEntries(message: Message, configs: CommandConfig) {
     );
 
     if (configs?.unit) {
-      const start = startOf(configs.unit || "month");
+      const start = configs.start;
 
       query = query.where(
         "created",
@@ -21,7 +26,7 @@ export async function getEntries(message: Message, configs: CommandConfig) {
       );
     }
 
-    if (configs?.command === "me") {
+    if (configs?.command === InputCommand.MY) {
       query = query.where("author.id", "==", message.author.id);
     }
 
