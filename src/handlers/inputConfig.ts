@@ -67,6 +67,10 @@ export class InputConfig {
     if (this.unit) {
       this.createIntervals();
 
+      if (!this.frequency) {
+        this.frequency = UnitToFrequency[this.unit];
+      }
+
       const smallFrequencies = [
         InputFrequency["BY-MINUTES"],
         InputFrequency["BY-HOURS"],

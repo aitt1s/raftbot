@@ -1,10 +1,10 @@
 import { firestore } from "firebase-admin";
 import { DateTime } from "luxon";
 import {
-  Entry,
   FirebaseStructure,
   Dateset,
   InputCommand,
+  FrequencyToUnit,
 } from "../../types/Raftbot";
 
 import { InputConfig } from "../../handlers/inputConfig";
@@ -69,7 +69,10 @@ export function groupByTime(
     const docDate = DateTime.fromSeconds(entry.created.seconds);
 
     const dayIdx = datesets.findIndex((datasetEntry: Dateset) =>
-      datasetEntry.date.hasSame(docDate, (configs.frequency as any) || "day")
+      datasetEntry.date.hasSame(
+        docDate,
+        FrequencyToUnit[configs.frequency] || "day"
+      )
     );
 
     if (dayIdx > -1) {

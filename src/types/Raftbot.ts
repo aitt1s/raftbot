@@ -49,6 +49,15 @@ export enum InputFrequency {
   "BY-YEARS" = "YEAR",
 }
 
+export const FrequencyToUnit = [
+  "year",
+  "month",
+  "week",
+  "day",
+  "hour",
+  "minute",
+];
+
 export const FrequencyOverride = {
   MINUTE: Frequency.MINUTELY,
   HOUR: Frequency.HOURLY,
@@ -60,6 +69,7 @@ export const FrequencyOverride = {
 };
 
 export const UnitToFrequency = {
+  MINUTE: Frequency.SECONDLY,
   MINUTELY: Frequency.SECONDLY,
   HOURLY: Frequency.MINUTELY,
   HOUR: Frequency.MINUTELY,
