@@ -29,7 +29,7 @@ export const commands = {
     type: "list",
   },
   "weekly-pie": {
-    period: "day",
+    period: "week",
     metric: "shits",
     grouping: "user",
     type: "pie",
