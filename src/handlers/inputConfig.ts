@@ -75,7 +75,7 @@ export class InputConfig {
     this.interval = Interval.fromDateTimes(this.start, this.end);
   }
 
-  private splitInput(input, override = false): string[] {
+  private splitInput(input): string[] {
     const inputString = input.trim().toLowerCase();
 
     if (!inputString) return [];
@@ -85,11 +85,9 @@ export class InputConfig {
 
     if (isCommand) {
       return [...Object.values(isCommand)];
-    } else {
-      throw "unkown";
     }
 
-    return inputString.split(" ");
+    throw "not_valid_command";
   }
 
   public fromInput(input: string): InputConfig {
@@ -100,6 +98,7 @@ export class InputConfig {
         grouping: defaultGrouping,
         type: defaultType,
       } = this.defaultCommand;
+
       const [period, metric, grouping, type] = this.splitInput(input);
 
       // !raftbot <period>  <metric>  <grouping>  <type>
