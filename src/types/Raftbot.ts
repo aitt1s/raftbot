@@ -2,6 +2,115 @@ import { firestore } from "firebase-admin";
 import { DateTime } from "luxon";
 import { Frequency } from "rrule";
 
+export type Command = {
+  period: string;
+  metric: string;
+  grouping: string;
+  type: string;
+};
+
+export const commands = {
+  "daily-pie": {
+    period: "day",
+    metric: "shits",
+    grouping: "user",
+    type: "pie",
+  },
+  "daily-top": {
+    period: "day",
+    metric: "shits",
+    grouping: "user",
+    type: "list",
+  },
+  "weekly-top": {
+    period: "week",
+    metric: "shits",
+    grouping: "user",
+    type: "list",
+  },
+  "weekly-pie": {
+    period: "day",
+    metric: "shits",
+    grouping: "user",
+    type: "pie",
+  },
+  "monthly-top": {
+    period: "month",
+    metric: "shits",
+    grouping: "user",
+    type: "list",
+  },
+  "monthly-pie": {
+    period: "month",
+    metric: "shits",
+    grouping: "user",
+    type: "pie",
+  },
+  "top-weekly-hours": {
+    period: "week",
+    metric: "shits",
+    grouping: "by-hour",
+    type: "bar",
+  },
+  "top-monthly-hours": {
+    period: "month",
+    metric: "shits",
+    grouping: "by-hour",
+    type: "bar",
+  },
+  "top-monthly-day": {
+    period: "month",
+    metric: "shits",
+    grouping: "by-day",
+    type: "bar",
+  },
+};
+
+export const intervalGroupings = ["by-minute", "by-hour", "by-day", "by-month"];
+
+export const rollingPeriods = [
+  "rolling-minute",
+  "rolling-hour",
+  "rolling-day",
+  "rolling-week",
+  "rolling-month",
+  "rolling-year",
+];
+
+export const staticPeriods = [
+  "minutely",
+  "minute",
+  "hourly",
+  "hour",
+  "daily",
+  "day",
+  "weekly",
+  "week",
+  "monthly",
+  "month",
+  "quarterly",
+  "quarter",
+  "yearly",
+  "year",
+];
+
+export const periods = [...rollingPeriods, ...staticPeriods];
+
+export const metrics = ["shits", "me", "my"];
+
+export const groupings = [...periods, ...metrics, ...intervalGroupings];
+
+export const types = ["top", "pie", "bar", "line", "radar", "polararea"];
+
+export const smallUnits = [
+  "minutely",
+  "minute",
+  "hourly",
+  "hour",
+  "daily",
+  "day",
+];
+
 export enum InputCommand {
   MY = "MY",
   TOTAL = "TOTAL",
@@ -9,89 +118,30 @@ export enum InputCommand {
   HELP = "HELP",
 }
 
-export enum InputType {
-  LIST = "LIST",
-  PIE = "PIE",
-  BAR = "BAR",
-  LINE = "LINE",
-  RADAR = "RADAR",
-  POLARAREA = "POLARAREA",
-}
-
-export enum RollingUnits {
-  HOURLY = "HOURLY",
-  DAILY = "DAILY",
-  WEEKLY = "WEEKLY",
-  MONTHLY = "MONTHLY",
-  QUARTLY = "QUARTLY",
-  YEARLY = "YEARLY",
-}
-
-export enum PeriodUnits {
-  HOUR = "HOUR",
-  DAY = "DAY",
-  WEEK = "WEEK",
-  MONTH = "MONTH",
-  QUARTER = "QUERTER",
-  YEAR = "YEAR",
-}
-
-export const InputUnit = { ...RollingUnits, ...PeriodUnits };
-export type InputUnit = typeof InputUnit;
-
-export enum InputFrequency {
-  "BY-MINUTES" = "MINUTE",
-  "BY-HOURS" = "HOUR",
-  "BY-DAYS" = "DAY",
-  "BY-WEEKS" = "WEEK",
-  "BY-MONTHS" = "MONTH",
-  "BY-QUARTERS" = "QUARTER",
-  "BY-YEARS" = "YEAR",
-}
-
-export const FrequencyToUnit = [
-  "year",
-  "month",
-  "week",
-  "day",
-  "hour",
-  "minute",
-];
-
-export const FrequencyOverride = {
-  MINUTE: Frequency.MINUTELY,
-  HOUR: Frequency.HOURLY,
-  DAY: Frequency.DAILY,
-  WEEK: Frequency.WEEKLY,
-  MONTH: Frequency.MONTHLY,
-  QUART: Frequency.MONTHLY,
-  YEAR: Frequency.YEARLY,
+export const intervalGroupingsToNormal = {
+  "by-minute": "minute",
+  "by-hour": "hour",
+  "by-day": "day",
+  "by-month": "month",
 };
 
-export const UnitToFrequency = {
-  MINUTE: Frequency.SECONDLY,
-  MINUTELY: Frequency.SECONDLY,
-  HOURLY: Frequency.MINUTELY,
-  HOUR: Frequency.MINUTELY,
-  DAILY: Frequency.HOURLY,
-  DAY: Frequency.HOURLY,
-  WEEKLY: Frequency.DAILY,
-  WEEK: Frequency.DAILY,
-  MONTHLY: Frequency.DAILY,
-  MONTH: Frequency.DAILY,
-  QUARTLY: Frequency.WEEKLY,
-  QUARTER: Frequency.WEEKLY,
-  YEARLY: Frequency.MONTHLY,
-  YEAR: Frequency.MONTHLY,
+export const PeriodToFrequency = {
+  minute: Frequency.MINUTELY,
+  hour: Frequency.HOURLY,
+  day: Frequency.DAILY,
+  week: Frequency.WEEKLY,
+  month: Frequency.MONTHLY,
+  year: Frequency.YEARLY,
 };
 
-export const RollingToLuxonDurationUnit = {
-  [RollingUnits.HOURLY]: "hour",
-  [RollingUnits.DAILY]: "day",
-  [RollingUnits.WEEKLY]: "week",
-  [RollingUnits.MONTHLY]: "month",
-  [RollingUnits.QUARTLY]: "quarter",
-  [RollingUnits.YEARLY]: "year",
+export const PeriodToDefaultFrequency = {
+  minute: Frequency.SECONDLY,
+  hour: Frequency.MINUTELY,
+  day: Frequency.HOURLY,
+  week: Frequency.DAILY,
+  month: Frequency.DAILY,
+  weekly: Frequency.WEEKLY,
+  year: Frequency.MONTHLY,
 };
 
 export enum FirebaseStructure {
@@ -111,9 +161,22 @@ export type Author = {
   username: string;
 };
 
-export type Entry = {
+export type FirestoreEntry = {
   messageId: string;
   author: Author;
   created?: firestore.Timestamp;
+  count?: number;
+};
+
+export type Entry = {
+  messageId?: string;
+  author?: Author;
+  created?: DateTime;
+  count?: number;
+  comparisonCount?: number;
+};
+
+export type Sorted = {
+  label?: any;
   count?: number;
 };

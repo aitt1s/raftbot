@@ -1,13 +1,12 @@
 import { firestore } from "firebase-admin";
 import { DateTime } from "luxon";
-import {
-  FirebaseStructure,
-  Dateset,
-  InputCommand,
-  FrequencyToUnit,
-} from "../../types/Raftbot";
+import { FirebaseStructure, periods, Sorted } from "../../types/Raftbot";
 
-import { InputConfig } from "../../handlers/inputConfig";
+import {
+  InputConfig,
+  getLabelForGrouping,
+  mapLuxonGetter,
+} from "../../handlers/inputConfig";
 
 export function getCollectinRef(
   guildId: string,
@@ -19,66 +18,78 @@ export function getCollectinRef(
     .collection(collection);
 }
 
-export function sortEntriesByAction(snapshot, configs: InputConfig): Dateset[] {
-  if (
-    configs.command === InputCommand.MY ||
-    configs.command === InputCommand.TOTAL
-  ) {
-    return groupByTime(snapshot, configs);
+export function groupEntries(snapshot, configs: InputConfig) {
+  if (periods.includes(configs.grouping) && configs.intervalGrouping) {
+    return groupByInterval(snapshot, configs);
   }
 
-  return groupByUser(snapshot);
+  if (periods.includes(configs.grouping)) {
+    return groupByPeriod(snapshot, configs);
+  }
+
+  if (!periods.includes(configs.grouping)) {
+    return groupByUser(snapshot);
+  }
 }
 
-export function groupByUser(snapshot: firestore.QuerySnapshot): Dateset[] {
-  let shitters = [];
-
-  snapshot.forEach((doc) => {
-    const entry = doc.data();
-
-    const shitterIdx = shitters.findIndex(
-      (shitter) => shitter.author.id === entry?.author?.id
-    );
-
-    if (shitterIdx > -1) {
-      shitters[shitterIdx].count += 1;
-      return;
-    }
-
-    if (entry?.author?.id) {
-      shitters.push({
-        ...entry,
-        count: 1,
-      });
-    }
-  });
-
-  shitters.sort((a, b) => b.count - a.count);
-
-  return shitters;
-}
-
-export function groupByTime(
-  snapshot: firestore.QuerySnapshot,
-  configs: InputConfig
-): Dateset[] {
-  let datesets: Dateset[] = configs.getDatesets();
+function groupByPeriod(snapshot, configs: InputConfig): Sorted[] {
+  let data = configs.getDates();
 
   snapshot.forEach((doc) => {
     const entry = doc.data();
     const docDate = DateTime.fromSeconds(entry.created.seconds);
 
-    const dayIdx = datesets.findIndex((datasetEntry: Dateset) =>
-      datasetEntry.date.hasSame(
-        docDate,
-        FrequencyToUnit[configs.frequency] || "day"
-      )
-    );
+    const label = getLabelForGrouping(docDate, configs.grouping);
 
-    if (dayIdx > -1) {
-      datesets[dayIdx].count += 1;
+    if (data[label] >= 0) {
+      data[label] += 1;
     }
   });
 
-  return datesets;
+  return Object.keys(data).map((d) => ({
+    label: d,
+    count: data[d],
+  }));
+}
+
+function groupByInterval(snapshot, configs: InputConfig): Sorted[] {
+  let data = configs.getInterval();
+
+  snapshot.forEach((doc) => {
+    const entry = doc.data();
+    const docDate = DateTime.fromSeconds(entry.created.seconds);
+
+    const label = docDate?.[mapLuxonGetter(configs.grouping)];
+
+    if (data[label] >= 0) {
+      data[label] += 1;
+    }
+  });
+
+  return Object.keys(data).map((d) => ({
+    label: d,
+    count: data[d],
+  }));
+}
+
+export function groupByUser(snapshot): Sorted[] {
+  let data = {};
+
+  snapshot.forEach((doc) => {
+    const entry = doc.data();
+    const author = entry.author?.username;
+
+    if (data[author] >= 0) {
+      data[author] += 1;
+    } else {
+      data[author] = 1;
+    }
+  });
+
+  return Object.keys(data)
+    .map((d) => ({
+      label: d,
+      count: data[d],
+    }))
+    .sort((a, b) => b.count - a.count);
 }

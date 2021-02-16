@@ -1,48 +1,21 @@
 import { Message } from "discord.js";
-import { Entry, Dateset, InputCommand, InputType } from "../../types/Raftbot";
+import { Sorted, periods, commands } from "../../types/Raftbot";
 import axios from "axios";
-import { DateTime } from "luxon";
 import { InputConfig } from "../../handlers/inputConfig";
 
-function getTimeLabels(configs: InputConfig) {
-  if (configs.smallUnits) {
-    return {
-      hour: "2-digit",
-    };
-  }
-
-  return {
-    weekday: "short",
-    month: "short",
-    day: "2-digit",
-  };
-}
-
-function getLabels(dateset: Dateset, configs: InputConfig) {
-  if (configs?.command === InputCommand.TOP) return dateset?.author?.username;
-
-  return dateset.date.toLocaleString(getTimeLabels(configs) as any);
-}
-
-function getLabel(message: Message, configs: InputConfig) {
-  if (configs?.command === InputCommand.MY) return message.author.username;
-
-  return "Total";
-}
-
 async function getChart(
-  datesets: Dateset[],
+  data,
   configs: InputConfig,
   message?: Message
 ): Promise<string> {
   const chart = {
-    type: configs?.type?.toLowerCase() || "bar",
+    type: configs?.type || "bar",
     data: {
-      labels: datesets.map((dateset) => getLabels(dateset, configs)),
+      labels: data.map((d) => d.label),
       datasets: [
         {
-          label: getLabel(message, configs),
-          data: datesets.map((dataset) => dataset.count),
+          label: "jee",
+          data: data.map((d) => d.count),
         },
       ],
     },
@@ -77,8 +50,12 @@ export async function sendToChannel(
   configs: InputConfig
 ): Promise<void> {
   try {
-    if (configs?.type !== InputType.LIST)
+    if (configs?.type !== "top")
       return await sendChartMessage(message, datasets, configs);
+
+    if (periods.includes(configs.grouping)) {
+      return await sendTopPeriodList(message, datasets, configs);
+    }
 
     await sendTopList(message, datasets, configs);
   } catch (error) {
@@ -86,22 +63,64 @@ export async function sendToChannel(
   }
 }
 
-export async function sendTopList(
+export async function sendTopPeriodList(
   message: Message,
-  shitters: Dateset[],
+  shitters: Sorted[],
   configs
 ): Promise<void> {
   try {
-    await message.channel.send(formatMessage(shitters, configs));
+    const header = `Spread of shits in ${configs.period} by ${configs.grouping}`;
+    const interval = `${configs.interval.toFormat("dd.MM HH:mm")}`;
+
+    const mapShitters = shitters
+      .map((shitter) => `${shitter.label}, ${shitter.count} times 💩`)
+      .join(`\n`);
+
+    const footer = `Total of ${shitters.reduce(
+      (acc, shitter) => (acc += shitter.count || 0),
+      0
+    )} shits taken 🚀🚽`;
+
+    const messageString = `\`\`\`${header}\n${interval}\n\n${mapShitters}\n\n${footer} \`\`\``;
+
+    await message.channel.send(messageString);
   } catch (error) {
-    await message.channel.send('Message probably too long 🚽🚽')
-    console.log("Sending shitters failed", error);
+    console.log("Sending top shitters failed", error);
+  }
+}
+
+export async function sendTopList(
+  message: Message,
+  shitters: Sorted[],
+  configs
+): Promise<void> {
+  try {
+    const header = `Top ${configs.period} shitters grouped by ${configs.grouping}`;
+    const interval = `${configs.interval.toFormat("dd.MM HH:mm")}`;
+
+    const mapShitters = shitters
+      .map(
+        (shitter, idx) =>
+          `${idx + 1}. ${shitter.label}, ${shitter.count} times 💩`
+      )
+      .join(`\n`);
+
+    const footer = `Total of ${shitters.reduce(
+      (acc, shitter) => (acc += shitter.count || 0),
+      0
+    )} shits taken 🚀🚽`;
+
+    const messageString = `\`\`\`${header}\n${interval}\n\n${mapShitters}\n\n${footer} \`\`\``;
+
+    await message.channel.send(messageString);
+  } catch (error) {
+    console.log("Sending top shitters failed", error);
   }
 }
 
 export async function sendChartMessage(
   message: Message,
-  datesets: Dateset[],
+  datesets,
   configs: InputConfig
 ): Promise<void> {
   try {
@@ -113,13 +132,20 @@ export async function sendChartMessage(
   }
 }
 
-export async function sendHelp(message: Message): Promise<void> {
-  await message.channel.send(`
-  !raftbot weekly
-  !raftbot daily total
-  !raftbot monthly top pie
-  !raftbot daily total by-hours
-  `);
+export async function sendHelp(message: Message, error = null): Promise<void> {
+  const mapCommands =
+    `commands:\n` +
+    Object.keys(commands)
+      .map((command) => `!raftbot ${command}`)
+      .join("\n");
+
+  const errorMessage = error
+    ? `Uups, you tried with command "${message.content}". Its not supported 💩\n\nTry following `
+    : "";
+
+  const messageString = `\`\`\`${errorMessage}${mapCommands}\`\`\``;
+
+  await message.channel.send(messageString);
 }
 
 export async function confirmPoop(message: Message): Promise<void> {
@@ -148,31 +174,4 @@ export async function getRandomQuote(): Promise<string> {
   } catch (error) {
     console.log("Couldn't fetch random quote", error.message);
   }
-}
-
-function formatShitters(shitters: Dateset[], configs: InputConfig): string {
-  return shitters
-    .map((shitter, index) => {
-      const author = shitter?.author?.username;
-
-      if (author) return `${index + 1}. ${author}, ${shitter.count} times 💩`;
-
-      return `${shitter.date.toLocaleString(getTimeLabels(configs))}, ${
-        shitter.count
-      } times 💩`;
-    })
-    .join("\n");
-}
-
-function formatMessage(shitters: Dateset[], configs: InputConfig): string {
-  return `\`\`\`Top ${
-    configs?.unit || "total"
-  } shitters \n${configs.interval.toFormat("dd.MM HH:mm")}\n\n${formatShitters(
-    shitters,
-    configs
-  )}\n\nTotal ${total(shitters)} shits taken 🚀🚽 \`\`\``;
-}
-
-function total(shitters: Dateset[]) {
-  return shitters.reduce((acc, shitter) => (acc += shitter.count || 0), 0);
 }

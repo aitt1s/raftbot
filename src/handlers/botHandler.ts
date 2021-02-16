@@ -3,16 +3,27 @@ import { Dateset, InputCommand } from "../types/Raftbot";
 import { InputConfig } from "./inputConfig";
 import { getEntries } from "../services/firebase";
 import { sendToChannel, sendHelp } from "../services/bot";
-import { sortEntriesByAction } from "../services/firebase/firebaseHelpers";
+import { groupEntries } from "../services/firebase/firebaseHelpers";
+
+// !raftbot <period> <metric> <grouping>
 
 export async function handleBotCommand(message: Message): Promise<void> {
-  const configs = new InputConfig().fromInput(message.content);
-  if (configs.command === InputCommand.HELP) {
+  const prefix: string = "!raftbot";
+  const content = message.content.slice(prefix.length);
+
+  if (content.includes("help")) {
     await sendHelp(message);
     return;
   }
 
-  const snapshot = await getEntries(message, configs);
-  const sorted: Dateset[] = sortEntriesByAction(snapshot, configs);
-  await sendToChannel(message, sorted, configs);
+  try {
+    const configs = new InputConfig().fromInput(message.content);
+
+    const snapshot = await getEntries(message, configs.start, configs.metric);
+    const grouped = groupEntries(snapshot, configs);
+
+    await sendToChannel(message, grouped, configs);
+  } catch (error) {
+    await sendHelp(message, error);
+  }
 }
