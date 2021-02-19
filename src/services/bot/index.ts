@@ -1,23 +1,14 @@
 import { Message } from "discord.js";
-import { Sorted, periods, commands } from "../../types/Raftbot";
+import { Sorted, periods, commands, SortedEntries } from "../../types/Raftbot";
 import axios from "axios";
 import { InputConfig } from "../../handlers/inputConfig";
 
-async function getChart(
-  data,
-  configs: InputConfig,
-  message?: Message
-): Promise<string> {
+async function getChart(data, configs: InputConfig): Promise<string> {
   const chart = {
     type: configs?.type || "bar",
     data: {
-      labels: data.map((d) => d.label),
-      datasets: [
-        {
-          label: "jee",
-          data: data.map((d) => d.count),
-        },
-      ],
+      labels: data.current.map((d) => d.label),
+      datasets: addDatasets(data, configs),
     },
   };
 
@@ -31,6 +22,30 @@ async function getChart(
   } catch (error) {
     console.log("Could not fetch the chart", error);
   }
+}
+
+export function addDatasets(data, configs: InputConfig) {
+  if (!configs.comparison) {
+    return [
+      {
+        label: configs.interval.toFormat("dd.MM HH:mm"),
+        data: data.current.map((d) => d.count),
+      },
+    ];
+  }
+
+  return [
+    {
+      label: configs.interval.toFormat("dd.MM HH:mm"),
+      data: data.current.map((d) => d.count),
+      lineTension: 0.4,
+    },
+    {
+      label: `${configs.comparisonInterval.toFormat("dd.MM HH:mm")} (previous)`,
+      data: data.comparison.map((d) => d.count),
+      lineTension: 0.4,
+    },
+  ];
 }
 
 async function sendChart(message: Message, url: string): Promise<void> {
@@ -65,18 +80,18 @@ export async function sendToChannel(
 
 export async function sendTopPeriodList(
   message: Message,
-  shitters: Sorted[],
+  shitters: SortedEntries,
   configs
 ): Promise<void> {
   try {
     const header = `Spread of shits in ${configs.period} by ${configs.grouping}`;
     const interval = `${configs.interval.toFormat("dd.MM HH:mm")}`;
 
-    const mapShitters = shitters
+    const mapShitters = shitters.current
       .map((shitter) => `${shitter.label}, ${shitter.count} times 💩`)
       .join(`\n`);
 
-    const footer = `Total of ${shitters.reduce(
+    const footer = `Total of ${shitters.current.reduce(
       (acc, shitter) => (acc += shitter.count || 0),
       0
     )} shits taken 🚀🚽`;
@@ -91,21 +106,21 @@ export async function sendTopPeriodList(
 
 export async function sendTopList(
   message: Message,
-  shitters: Sorted[],
+  shitters: SortedEntries,
   configs
 ): Promise<void> {
   try {
     const header = `Top ${configs.period} shitters grouped by ${configs.grouping}`;
     const interval = `${configs.interval.toFormat("dd.MM HH:mm")}`;
 
-    const mapShitters = shitters
+    const mapShitters = shitters.current
       .map(
         (shitter, idx) =>
           `${idx + 1}. ${shitter.label}, ${shitter.count} times 💩`
       )
       .join(`\n`);
 
-    const footer = `Total of ${shitters.reduce(
+    const footer = `Total of ${shitters.current.reduce(
       (acc, shitter) => (acc += shitter.count || 0),
       0
     )} shits taken 🚀🚽`;
@@ -124,7 +139,7 @@ export async function sendChartMessage(
   configs: InputConfig
 ): Promise<void> {
   try {
-    const url = await getChart(datesets, configs, message);
+    const url = await getChart(datesets, configs);
 
     await sendChart(message, url);
   } catch (error) {

@@ -18,12 +18,13 @@ export async function handleBotCommand(message: Message): Promise<void> {
 
     const configs = await new InputConfig().fromInput(content);
 
-    const snapshot = await getEntries(message, configs.start, configs.metric);
+    const snapshot = await getEntries(message, configs);
     const grouped = groupEntries(snapshot, configs);
 
     await sendToChannel(message, grouped, configs);
   } catch (error) {
     if (error === "not_valid_command") return await sendHelp(message, error);
+    console.log(error);
 
     console.log("error handling the command");
   }

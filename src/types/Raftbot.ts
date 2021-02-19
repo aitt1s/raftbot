@@ -7,6 +7,8 @@ export type Command = {
   metric: string;
   grouping: string;
   type: string;
+  comparison?: boolean;
+  cumulative?: boolean;
 };
 
 export const commands = {
@@ -34,6 +36,14 @@ export const commands = {
     grouping: "user",
     type: "pie",
   },
+  "weekly-line": {
+    period: "week",
+    metric: "shits",
+    grouping: "day",
+    type: "line",
+    comparison: true,
+    cumulative: true,
+  },
   "monthly-top": {
     period: "month",
     metric: "shits",
@@ -45,6 +55,14 @@ export const commands = {
     metric: "shits",
     grouping: "user",
     type: "pie",
+  },
+  "monthly-line": {
+    period: "month",
+    metric: "shits",
+    grouping: "day",
+    type: "line",
+    comparison: true,
+    cumulative: true,
   },
   "top-weekly-hours": {
     period: "week",
@@ -63,6 +81,28 @@ export const commands = {
     metric: "shits",
     grouping: "by-day",
     type: "bar",
+  },
+  "top-monthly-minute": {
+    period: "month",
+    metric: "shits",
+    grouping: "by-minute",
+    type: "line",
+  },
+  "my-weekly-line": {
+    period: "week",
+    metric: "me",
+    grouping: "day",
+    type: "line",
+    comparison: true,
+    cumulative: true,
+  },
+  "my-monthly-line": {
+    period: "month",
+    metric: "me",
+    grouping: "day",
+    type: "line",
+    comparison: true,
+    cumulative: true,
   },
 };
 
@@ -175,6 +215,8 @@ export type Entry = {
   count?: number;
   comparisonCount?: number;
 };
+
+export type SortedEntries = { current: Sorted[]; comparison: Sorted[] };
 
 export type Sorted = {
   label?: any;

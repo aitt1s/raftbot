@@ -27,12 +27,17 @@ export class InputConfig {
   comparisonEnd: DateTime;
 
   interval: Interval;
+  comparisonInterval: Interval;
+  comparison: boolean = false;
+
+  cumulative: boolean = false;
 
   defaultCommand: Command = {
     period: "day",
     metric: "shits",
     grouping: "user",
     type: "top",
+    comparison: false,
   };
 
   intervalGrouping: boolean = false;
@@ -73,18 +78,22 @@ export class InputConfig {
     }
 
     this.interval = Interval.fromDateTimes(this.start, this.end);
+    this.comparisonInterval = Interval.fromDateTimes(
+      this.comparisonStart,
+      this.comparisonEnd
+    );
   }
 
-  private splitInput(input): string[] {
+  private getCommand(input): Command {
     const inputString = input.trim().toLowerCase();
 
-    if (!inputString) return [];
+    if (!inputString) return;
 
     // match command
     const isCommand: Command = commands[inputString];
 
     if (isCommand) {
-      return [...Object.values(isCommand)];
+      return isCommand;
     }
 
     throw "not_valid_command";
@@ -99,7 +108,14 @@ export class InputConfig {
         type: defaultType,
       } = this.defaultCommand;
 
-      const [period, metric, grouping, type] = this.splitInput(input);
+      const {
+        period,
+        metric,
+        grouping,
+        type,
+        comparison = false,
+        cumulative = false,
+      } = this.getCommand(input);
 
       // !raftbot <period>  <metric>  <grouping>  <type>
       // !raftbot weekly    shits     user        top
@@ -110,6 +126,8 @@ export class InputConfig {
       this.metric = metrics.includes(metric) ? metric : defaultMetric;
       this.grouping = groupings.includes(grouping) ? grouping : defaultGrouping;
       this.type = types.includes(type) ? type : defaultType;
+      this.comparison = comparison || false;
+      this.cumulative = cumulative || false;
 
       if (intervalGroupings.includes(this.grouping)) {
         this.intervalGrouping = true;

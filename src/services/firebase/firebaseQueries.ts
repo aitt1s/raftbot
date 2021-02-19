@@ -3,31 +3,47 @@ import { FirebaseStructure } from "../../types/Raftbot";
 import { getCollectinRef } from "./firebaseHelpers";
 import { Message } from "discord.js";
 import { DateTime } from "luxon";
+import { InputConfig } from "../../handlers/inputConfig";
 
-export async function getEntries(
-  message: Message,
-  start: DateTime,
-  metric: string
-) {
+export async function getEntries(message: Message, configs: InputConfig) {
   try {
-    let query: any = getCollectinRef(
+    const query: any = getCollectinRef(
       message.guild.id,
       FirebaseStructure.ENTRIES
     );
 
-    query = query.where(
+    let current;
+    let comparison;
+
+    current = query.where(
       "created",
       ">",
-      firestore.Timestamp.fromDate(start.toJSDate())
+      firestore.Timestamp.fromDate(configs.start.toJSDate())
     );
 
-    if (metric === "me") {
-      query = query.where("author.id", "==", message.author.id);
+    if (configs.comparison) {
+      comparison = query
+        .where(
+          "created",
+          ">",
+          firestore.Timestamp.fromDate(configs.comparisonStart.toJSDate())
+        )
+        .where(
+          "created",
+          "<",
+          firestore.Timestamp.fromDate(configs.comparisonEnd.toJSDate())
+        );
     }
 
-    const snapshot = await query;
+    if (configs.metric === "me") {
+      current = query.where("author.id", "==", message.author.id);
+      comparison = query.where("author.id", "==", message.author.id);
+    }
 
-    return snapshot.get();
+    return {
+      current: await (await current).get(),
+      comparison: configs.comparison ? await (await comparison).get() : null,
+    };
   } catch (error) {
     console.log("Couldnt get entries", error);
   }
