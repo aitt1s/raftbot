@@ -188,7 +188,7 @@ export async function getRandomMeme(): Promise<string> {
   try {
     const {
       data: { url },
-    } = await axios.get("https://meme-api.herokuapp.com/gimme");
+    } = await axios.get("https://meme-api.herokuapp.com/gimme/suomi");
 
     if (url) {
       return url;
