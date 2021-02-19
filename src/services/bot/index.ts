@@ -167,10 +167,10 @@ export async function confirmPoop(message: Message): Promise<void> {
   try {
     await message.react("✅");
 
-    const url = await getRandomMeme();
+    const { url, title } = await getRandomMeme();
 
     if (url) {
-      await message.reply({
+      await message.reply(title, {
         files: [
           {
             attachment: url,
@@ -184,14 +184,14 @@ export async function confirmPoop(message: Message): Promise<void> {
   }
 }
 
-export async function getRandomMeme(): Promise<string> {
+export async function getRandomMeme() {
   try {
     const {
-      data: { url },
+      data: { url, title },
     } = await axios.get("https://meme-api.herokuapp.com/gimme/suomi");
 
     if (url) {
-      return url;
+      return { url, title };
     }
   } catch (error) {
     console.log("Couldn't fetch random quote", error.message);
