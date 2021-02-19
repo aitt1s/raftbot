@@ -100,17 +100,20 @@ export function groupByUser(snapshot, configs): SortedEntries {
     const entry = doc.data();
     const author = entry.author?.username;
 
-    if (current[author] >= 0) {
-      current[author] += 1;
+    if (current[author]?.count >= 0) {
+      current[author].count += 1;
     } else {
-      current[author] = 1;
+      current[author] = {
+        count: 1,
+        author: entry.author,
+      };
     }
   });
 
-  const data = returnObject(current, comparison, configs);
+  const data = mapTop(current);
 
   return {
-    current: data.current.sort((a, b) => b.count - a.count),
+    current: data.sort((a, b) => b.count - a.count),
     comparison: null,
   };
 }
@@ -130,6 +133,16 @@ export function generateDataset(data, configs) {
   }
 
   return mapDataset(data, configs);
+}
+
+export function mapTop(data) {
+  return Object.keys(data).map((d) => {
+    return {
+      label: d,
+      count: data[d].count,
+      author: data[d].author,
+    };
+  });
 }
 
 export function mapDataset(data, configs) {

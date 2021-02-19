@@ -221,4 +221,8 @@ export type SortedEntries = { current: Sorted[]; comparison: Sorted[] };
 export type Sorted = {
   label?: any;
   count?: number;
+  author?: {
+    username?: string;
+    id?: string;
+  };
 };

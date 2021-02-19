@@ -29,3 +29,24 @@ export async function handleBotCommand(message: Message): Promise<void> {
     console.log("error handling the command");
   }
 }
+
+export async function handleCronTask(guild, content): Promise<void> {
+  try {
+    const configs = await new InputConfig().fromInput(content);
+
+    const snapshot = await getEntries(guild, configs);
+    const grouped = groupEntries(snapshot, configs);
+
+    await sendToChannel(guild, grouped, configs);
+
+    const user = grouped?.current?.[0].author?.username;
+
+    if (user) {
+      await guild.channel.send(
+        `\`\`\`Congratulations to the daily hardest shitter:\n\n💩💩💩💩💩💩\n\n\t${user}\n\n💩💩💩💩💩💩\n\nHe shitted ${grouped?.current?.[0].count} times!\`\`\``
+      );
+    }
+  } catch (error) {
+    console.log("error handling the command");
+  }
+}

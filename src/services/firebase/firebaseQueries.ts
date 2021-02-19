@@ -5,7 +5,7 @@ import { Message } from "discord.js";
 import { DateTime } from "luxon";
 import { InputConfig } from "../../handlers/inputConfig";
 
-export async function getEntries(message: Message, configs: InputConfig) {
+export async function getEntries(message, configs: InputConfig) {
   try {
     const query: any = getCollectinRef(
       message.guild.id,
@@ -36,8 +36,8 @@ export async function getEntries(message: Message, configs: InputConfig) {
     }
 
     if (configs.metric === "me") {
-      current = query.where("author.id", "==", message.author.id);
-      comparison = query.where("author.id", "==", message.author.id);
+      current = query.where("author.id", "==", message?.author?.id);
+      comparison = query.where("author.id", "==", message?.author?.id);
     }
 
     return {

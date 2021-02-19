@@ -25,6 +25,7 @@
     "dotenv": "^8.2.0",
     "firebase-admin": "^9.4.2",
     "luxon": "^1.25.0",
+    "node-cron": "^2.0.3",
     "rrule": "^2.6.8"
   },
   "engines": {

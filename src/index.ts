@@ -19,6 +19,6 @@ const client: Client = new Client();
 
 client.on("message", handleMessage);
 client.on("messageReactionAdd", handleReaction);
-client.on("ready", handleReady);
+client.on("ready", () => handleReady(client));
 
 client.login(process.env.DISCORD_BOT_TOKEN);
