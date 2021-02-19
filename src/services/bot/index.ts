@@ -167,24 +167,31 @@ export async function confirmPoop(message: Message): Promise<void> {
   try {
     await message.react("✅");
 
-    const randomQuote = await getRandomQuote();
+    const url = await getRandomMeme();
 
-    if (randomQuote) {
-      await message.reply(randomQuote);
+    if (url) {
+      await message.reply({
+        files: [
+          {
+            attachment: url,
+            name: "meme.png",
+          },
+        ],
+      });
     }
   } catch (error) {
     console.log("Confirm poop failed", error);
   }
 }
 
-export async function getRandomQuote(): Promise<string> {
+export async function getRandomMeme(): Promise<string> {
   try {
     const {
-      data: { content, author },
-    } = await axios.get("https://api.quotable.io/random");
+      data: { url },
+    } = await axios.get("https://meme-api.herokuapp.com/gimme");
 
-    if (content && author) {
-      return `${content} _${author}_`;
+    if (url) {
+      return url;
     }
   } catch (error) {
     console.log("Couldn't fetch random quote", error.message);
