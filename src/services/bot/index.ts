@@ -169,6 +169,7 @@ export async function confirmPoop(message: Message): Promise<void> {
 
     const { url, title } = await getRandomMeme();
 
+    /*
     if (url) {
       await message.reply(title, {
         files: [
@@ -179,6 +180,7 @@ export async function confirmPoop(message: Message): Promise<void> {
         ],
       });
     }
+    */
   } catch (error) {
     console.log("Confirm poop failed", error);
   }
